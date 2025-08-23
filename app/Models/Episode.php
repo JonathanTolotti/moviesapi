@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo; // New import
+use Illuminate\Database\Eloquent\Relations\HasMany; // New import
 
 class Episode extends Model
 {
@@ -20,4 +22,14 @@ class Episode extends Model
         'still_path',
         'air_date',
     ];
+
+    public function season(): BelongsTo
+    {
+        return $this->belongsTo(Season::class);
+    }
+
+    public function userEpisodes(): HasMany
+    {
+        return $this->hasMany(UserEpisode::class);
+    }
 }

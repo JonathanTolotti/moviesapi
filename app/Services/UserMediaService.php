@@ -9,7 +9,7 @@ use App\Models\User;
 use App\Models\UserEpisode;
 use App\Models\UserMedia;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Collection; // New import
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class UserMediaService
@@ -38,7 +38,7 @@ class UserMediaService
 
         return UserMedia::firstOrCreate(
             ['user_id' => $user->id, 'media_id' => $media->id],
-            ['is_favorite' => false, 'status' => 'watching']
+            ['is_favorite' => false, 'status' => 'watching', 'media_type' => $mediaType] // Added media_type here
         );
     }
 
@@ -73,13 +73,7 @@ class UserMediaService
             throw new \InvalidArgumentException('Cannot mark a movie as an episode.');
         }
 
-        $episodeDetails = $this->theMovieDbService->getTvShowEpisodeDetails(
-            $media->tmdb_id,
-            $season->season_number,
-            $episode->episode_number
-        );
-
-        $runtime = $episodeDetails['runtime'] ?? 0;
+        $runtime = $episode->runtime ?? 0;
 
         $userEpisode = UserEpisode::firstOrCreate(
             ['user_media_id' => $userMedia->id, 'episode_id' => $episode->id]
@@ -145,7 +139,7 @@ class UserMediaService
             ->where('user_id', $user->id)
             ->firstOrFail();
 
-        $userMedia->userEpisodes()->delete(); // Delete all associated user episodes
+        $userMedia->userEpisodes()->delete();
         $userMedia->is_completed = false;
         $userMedia->status = 'watching';
         $userMedia->save();
@@ -173,7 +167,6 @@ class UserMediaService
                 'percentage' => $totalEpisodes > 0 ? round(($watchedEpisodesCount / $totalEpisodes) * 100) : 0,
             ];
         } else {
-            // For movies, progress is either 0% or 100%
             $userMedia->progress = [
                 'total_episodes' => 1,
                 'watched_episodes' => $userMedia->is_completed ? 1 : 0,
@@ -248,6 +241,7 @@ class UserMediaService
                             'overview' => $episodeData['overview'],
                             'still_path' => $episodeData['still_path'],
                             'air_date' => $episodeData['air_date'] ? Carbon::parse($episodeData['air_date']) : null,
+                            'runtime' => $episodeData['runtime'] ?? null,
                         ]
                     );
                 }

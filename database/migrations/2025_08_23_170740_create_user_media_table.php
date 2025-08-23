@@ -16,7 +16,7 @@ return new class extends Migration
             $table->uuid('uuid')->unique();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('media_id')->constrained()->onDelete('cascade');
-            $table->string('media_type')->after('media_id'); // Added media_type
+            $table->string('media_type'); // Removed ->after('media_id')
             $table->boolean('is_favorite')->default(false);
             $table->string('status')->default('watching');
             $table->timestamps();

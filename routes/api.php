@@ -25,6 +25,7 @@ Route::middleware('auth:api')->group(function () {
 
         Route::get('/', [UserMediaController::class, 'index']); // New route
         Route::get('/unfinished', [UserMediaController::class, 'unfinished']); // New route
+        Route::get('/{uuid}/episodes', [UserMediaController::class, 'getEpisodes']); // New route
         Route::post('/{uuid}/reset-progress', [UserMediaController::class, 'resetProgress']); // New route
     });
 });

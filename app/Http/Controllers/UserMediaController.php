@@ -76,4 +76,11 @@ class UserMediaController extends Controller
 
         return response()->json($userMedia);
     }
+
+    public function getEpisodes(string $uuid): JsonResponse
+    {
+        $episodes = $this->userMediaService->getEpisodesWithWatchStatus(auth()->user(), $uuid);
+
+        return response()->json($episodes);
+    }
 }

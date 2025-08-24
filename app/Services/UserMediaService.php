@@ -248,4 +248,46 @@ class UserMediaService
             }
         }
     }
+
+    public function getEpisodesWithWatchStatus(User $user, string $userMediaUuid): \Illuminate\Support\Collection
+    {
+        $userMedia = UserMedia::where('uuid', $userMediaUuid)
+            ->where('user_id', $user->id)
+            ->with('media.seasons.episodes')
+            ->firstOrFail();
+
+        if ($userMedia->media->media_type !== 'tv') {
+            throw new \InvalidArgumentException('This media type does not have episodes.');
+        }
+
+        $allEpisodes = new Collection();
+        foreach ($userMedia->media->seasons as $season) {
+            if ($season->season_number > 0) { // Exclude season 0 (specials) if not desired
+                $allEpisodes = $allEpisodes->merge($season->episodes);
+            }
+        }
+
+        $userEpisodes = $userMedia->userEpisodes->keyBy('episode_id');
+
+        return $allEpisodes->map(function ($episode) use ($userEpisodes) {
+            $userEpisode = $userEpisodes->get($episode->id);
+
+            return [
+                'uuid' => $episode->uuid,
+                'tmdb_id' => $episode->tmdb_id,
+                'episode_number' => $episode->episode_number,
+                'season_number' => $episode->season->season_number,
+                'name' => $episode->name,
+                'overview' => $episode->overview,
+                'still_path' => $episode->still_path,
+                'air_date' => $episode->air_date,
+                'runtime' => $episode->runtime,
+                'status' => $userEpisode ? $userEpisode->status : 'unwatched',
+                'watched_at' => $userEpisode ? $userEpisode->watched_at : null,
+                'watched_duration' => $userEpisode ? $userEpisode->watched_duration : 0,
+            ];
+        })->sortBy(function ($episode) {
+            return [$episode['season_number'], $episode['episode_number']];
+        })->values();
+    }
 }
